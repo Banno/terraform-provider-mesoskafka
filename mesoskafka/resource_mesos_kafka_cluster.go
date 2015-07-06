@@ -26,18 +26,15 @@ func resourceMesosKafkaClusterCreate(d *schema.ResourceData, meta interface{}) e
 
 	broker_count := d.Get("broker_count").(int)
 
+	broker_ids := []int{}
 	for i := 0; i < broker_count; i++ {
-		_, err := c.ApiBrokersAdd(i)
+		broker_ids = append(broker_ids, i)
+	}
 
-		if err != nil {
-			panic(err)
-		}
+	err := c.ApiBrokersCreate(broker_ids)
 
-		_, err = c.ApiBrokersStart(i)
-
-		if err != nil {
-			panic(err)
-		}
+	if err != nil {
+		return err
 	}
 
 	status, _ := c.ApiBrokersStatus()

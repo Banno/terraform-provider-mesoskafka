@@ -203,3 +203,23 @@ func (c *Client) ApiBrokersRemove(BrokerId int) (*MutateStatus, error) {
 
 	return &response, nil
 }
+
+func (c *Client) ApiBrokersCreate(BrokerIds []int) error {
+
+	for brokerId, _ := range BrokerIds {
+		_, err := c.ApiBrokersAdd(brokerId)
+
+		if err != nil {
+			return err
+		}
+
+		_, err = c.ApiBrokersStart(brokerId)
+
+		if err != nil {
+			return err
+		}
+
+	}
+
+	return nil
+}
