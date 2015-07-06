@@ -41,10 +41,20 @@ func resourceMesosKafkaClusterCreate(d *schema.ResourceData, meta interface{}) e
 		}
 	}
 
-	return resourceMesosKafkaBrokerRead(d, meta)
+	status, _ := c.ApiBrokersStatus()
+	// TODO: this should probably not be this. just a placeholder
+	d.SetId(status.FrameworkID)
+
+	return resourceMesosKafkaClusterRead(d, meta)
 }
 
 func resourceMesosKafkaClusterRead(d *schema.ResourceData, meta interface{}) error {
+	c := meta.(Client)
+	status, _ := c.ApiBrokersStatus()
+
+	d.Set("broker_count", len(status.Brokers))
+
+	fmt.Println(status)
 	return nil
 }
 
@@ -53,14 +63,5 @@ func resourceMesosKafkaClusterUpdate(d *schema.ResourceData, meta interface{}) e
 }
 
 func resourceMesosKafkaClusterDelete(d *schema.ResourceData, meta interface{}) error {
-	return nil
-}
-
-func resourceMesosKafkaBrokerRead(d *schema.ResourceData, meta interface{}) error {
-	c := meta.(Client)
-	status, _ := c.ApiBrokersStatus()
-
-	fmt.Println(status)
-
 	return nil
 }

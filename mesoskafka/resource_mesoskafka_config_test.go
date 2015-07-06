@@ -2,6 +2,7 @@ package mesoskafka
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
@@ -25,7 +26,7 @@ func TestAccMesosKafkaCluster_basic(t *testing.T) {
 			resource.TestStep{
 				Config: basicMesosKafkaClusterResource,
 				Check: resource.ComposeTestCheckFunc(
-					testAccReadBrokers("mesoskafka_cluster.broker-example"),
+					testAccReadCluster("mesoskafka_cluster.broker-example"),
 					// testCheckCreate(backendName, &backendsResult),
 					// testIfBackendIsPublic(backendName, &backendsResult, false),
 				),
@@ -34,24 +35,26 @@ func TestAccMesosKafkaCluster_basic(t *testing.T) {
 	})
 }
 
-func testAccReadBrokers(name string) resource.TestCheckFunc {
+func testAccReadCluster(name string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		_, ok := s.RootModule().Resources[name]
 		if !ok {
 			return fmt.Errorf("mesoskafka_cluster resource not found: %s", name)
 		}
 
-		client := testAccProvider.Meta().(*Client)
-		fmt.Println(client)
+		client := testAccProvider.Meta().(Client)
 
-		// backendRead, err := client.BackendsRead()
-		// if err != nil {
-		// 	return fmt.Errorf("Error during backends read: %v", err)
-		// }
+		status, err := client.ApiBrokersStatus()
 
-		// time.Sleep(5 * time.Second)
+		if err != nil {
+			return fmt.Errorf("Error during backends read: %v", err)
+		}
 
-		// *backendsResult = *backendRead
+		time.Sleep(5 * time.Second)
+
+		if len(status.Brokers) != 1 {
+			return fmt.Errorf("Add Brokers Failed: wrong number of brokers %v", status.Brokers)
+		}
 
 		return nil
 	}
