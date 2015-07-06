@@ -116,8 +116,7 @@ type Brokers struct {
 	Brokers []Broker `json:"brokers"`
 }
 
-type Start struct {
-	//{"status" : "started", "ids" : "0"}
+type MutateStatus struct {
 	Status string `json:"started"`
 }
 
@@ -131,7 +130,7 @@ func (c *Client) ApiBrokersStatus() (*Status, error) {
 	var status Status
 	e = json.Unmarshal(body, &status)
 	if e != nil {
-		panic(e)
+		return nil, e
 	}
 
 	return &status, nil
@@ -148,13 +147,13 @@ func (c *Client) ApiBrokersAdd(BrokerId int) (*Brokers, error) {
 	var response Brokers
 	e = json.Unmarshal(body, &response)
 	if e != nil {
-		panic(e)
+		return nil, e
 	}
 
 	return &response, nil
 }
 
-func (c *Client) ApiBrokersStart(BrokerId int) (*Start, error) {
+func (c *Client) ApiBrokersStart(BrokerId int) (*MutateStatus, error) {
 	url := fmt.Sprintf("/api/brokers/start?id=%d", BrokerId)
 	body, e := c.getJson(url)
 
@@ -162,10 +161,44 @@ func (c *Client) ApiBrokersStart(BrokerId int) (*Start, error) {
 		return nil, e
 	}
 
-	var response Start
+	var response MutateStatus
 	e = json.Unmarshal(body, &response)
 	if e != nil {
-		panic(e)
+		return nil, e
+	}
+
+	return &response, nil
+}
+
+func (c *Client) ApiBrokersStop(BrokerId int) (*MutateStatus, error) {
+	url := fmt.Sprintf("/api/brokers/stop?id=%d", BrokerId)
+	body, e := c.getJson(url)
+
+	if e != nil {
+		return nil, e
+	}
+
+	var response MutateStatus
+	e = json.Unmarshal(body, &response)
+	if e != nil {
+		return nil, e
+	}
+
+	return &response, nil
+}
+
+func (c *Client) ApiBrokersRemove(BrokerId int) (*MutateStatus, error) {
+	url := fmt.Sprintf("/api/brokers/remove?id=%d", BrokerId)
+	body, e := c.getJson(url)
+
+	if e != nil {
+		return nil, e
+	}
+
+	var response MutateStatus
+	e = json.Unmarshal(body, &response)
+	if e != nil {
+		return nil, e
 	}
 
 	return &response, nil

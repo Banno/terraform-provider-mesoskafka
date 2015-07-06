@@ -1,7 +1,6 @@
 package mesoskafka
 
 import (
-	"fmt"
 	"github.com/hashicorp/terraform/helper/schema"
 )
 
@@ -50,11 +49,13 @@ func resourceMesosKafkaClusterCreate(d *schema.ResourceData, meta interface{}) e
 
 func resourceMesosKafkaClusterRead(d *schema.ResourceData, meta interface{}) error {
 	c := meta.(Client)
-	status, _ := c.ApiBrokersStatus()
+	status, err := c.ApiBrokersStatus()
+	if err != nil {
+		return err
+	}
 
 	d.Set("broker_count", len(status.Brokers))
 
-	fmt.Println(status)
 	return nil
 }
 
@@ -63,5 +64,22 @@ func resourceMesosKafkaClusterUpdate(d *schema.ResourceData, meta interface{}) e
 }
 
 func resourceMesosKafkaClusterDelete(d *schema.ResourceData, meta interface{}) error {
+	c := meta.(Client)
+
+	status, _ := c.ApiBrokersStatus()
+
+	for i := 0; i < len(status.Brokers); i++ {
+		_, err := c.ApiBrokersStop(i)
+
+		if err != nil {
+			return err
+		}
+
+		_, err = c.ApiBrokersRemove(i)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
