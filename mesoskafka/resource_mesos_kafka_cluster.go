@@ -1,7 +1,9 @@
 package mesoskafka
 
 import (
+	"fmt"
 	"github.com/hashicorp/terraform/helper/schema"
+	"strconv"
 )
 
 func resourceMesosKafkaCluster() *schema.Resource {
@@ -57,6 +59,47 @@ func resourceMesosKafkaClusterRead(d *schema.ResourceData, meta interface{}) err
 }
 
 func resourceMesosKafkaClusterUpdate(d *schema.ResourceData, meta interface{}) error {
+	c := meta.(Client)
+	status, err := c.ApiBrokersStatus()
+	if err != nil {
+		return err
+	}
+
+	broker_count := d.Get("broker_count").(int)
+	current_count := len(status.Brokers)
+
+	if current_count > broker_count {
+		// remove some brokers
+		how_many := current_count - broker_count
+		fmt.Println(how_many)
+	} else if broker_count > current_count {
+		// add some brokers
+		how_many := broker_count - current_count
+
+		max_broker_id := 0
+
+		for _, broker := range status.Brokers {
+			_id, _ := strconv.ParseInt(broker.Id, 10, 0)
+			id := int(_id)
+			if id > max_broker_id {
+				max_broker_id = id
+			}
+		}
+
+		broker_ids := []int{}
+		for j := max_broker_id + 1; j <= max_broker_id+how_many; j++ {
+			broker_ids = append(broker_ids, j)
+		}
+
+		err := c.ApiBrokersCreate(broker_ids)
+		if err != nil {
+			return err
+		}
+
+	} else {
+		fmt.Println("Broker counts are the same")
+	}
+
 	return nil
 }
 

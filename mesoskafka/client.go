@@ -206,7 +206,7 @@ func (c *Client) ApiBrokersRemove(BrokerId int) (*MutateStatus, error) {
 
 func (c *Client) ApiBrokersCreate(BrokerIds []int) error {
 
-	for brokerId, _ := range BrokerIds {
+	for _, brokerId := range BrokerIds {
 		_, err := c.ApiBrokersAdd(brokerId)
 
 		if err != nil {
