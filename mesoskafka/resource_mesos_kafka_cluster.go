@@ -3,6 +3,7 @@ package mesoskafka
 import (
 	"fmt"
 	"github.com/hashicorp/terraform/helper/schema"
+	"sort"
 	"strconv"
 )
 
@@ -26,14 +27,14 @@ func resourceMesosKafkaCluster() *schema.Resource {
 func resourceMesosKafkaClusterCreate(d *schema.ResourceData, meta interface{}) error {
 	c := meta.(Client)
 
-	broker_count := d.Get("broker_count").(int)
+	brokerCount := d.Get("broker_count").(int)
 
-	broker_ids := []int{}
-	for i := 0; i < broker_count; i++ {
-		broker_ids = append(broker_ids, i)
+	brokerIDs := []int{}
+	for i := 0; i < brokerCount; i++ {
+		brokerIDs = append(brokerIDs, i)
 	}
 
-	err := c.ApiBrokersCreate(broker_ids)
+	err := c.ApiBrokersCreate(brokerIDs)
 
 	if err != nil {
 		return err
@@ -65,33 +66,48 @@ func resourceMesosKafkaClusterUpdate(d *schema.ResourceData, meta interface{}) e
 		return err
 	}
 
-	broker_count := d.Get("broker_count").(int)
-	current_count := len(status.Brokers)
+	brokerCount := d.Get("broker_count").(int)
+	currentCount := len(status.Brokers)
 
-	if current_count > broker_count {
+	if currentCount > brokerCount {
 		// remove some brokers
-		how_many := current_count - broker_count
-		fmt.Println(how_many)
-	} else if broker_count > current_count {
-		// add some brokers
-		how_many := broker_count - current_count
+		howMany := currentCount - brokerCount
 
-		max_broker_id := 0
+		currentBrokers := []int{}
+		for _, broker := range status.Brokers {
+			_id, _ := strconv.ParseInt(broker.Id, 10, 0)
+			id := int(_id)
+			currentBrokers = append(currentBrokers, id)
+		}
+		sort.Ints(currentBrokers)
+
+		toDelete := currentBrokers[len(currentBrokers)-howMany : len(currentBrokers)]
+
+		err := c.ApiBrokersDelete(toDelete)
+		if err != nil {
+			return err
+		}
+
+	} else if brokerCount > currentCount {
+		// add some brokers
+		howMany := brokerCount - currentCount
+
+		maxBrokerID := 0
 
 		for _, broker := range status.Brokers {
 			_id, _ := strconv.ParseInt(broker.Id, 10, 0)
 			id := int(_id)
-			if id > max_broker_id {
-				max_broker_id = id
+			if id > maxBrokerID {
+				maxBrokerID = id
 			}
 		}
 
-		broker_ids := []int{}
-		for j := max_broker_id + 1; j <= max_broker_id+how_many; j++ {
-			broker_ids = append(broker_ids, j)
+		brokerIDs := []int{}
+		for j := maxBrokerID + 1; j <= maxBrokerID+howMany; j++ {
+			brokerIDs = append(brokerIDs, j)
 		}
 
-		err := c.ApiBrokersCreate(broker_ids)
+		err := c.ApiBrokersCreate(brokerIDs)
 		if err != nil {
 			return err
 		}
@@ -108,12 +124,12 @@ func resourceMesosKafkaClusterDelete(d *schema.ResourceData, meta interface{}) e
 
 	status, _ := c.ApiBrokersStatus()
 
-	broker_ids := []int{}
+	brokerIDs := []int{}
 	for i := 0; i < len(status.Brokers); i++ {
-		broker_ids = append(broker_ids, i)
+		brokerIDs = append(brokerIDs, i)
 	}
 
-	err := c.ApiBrokersDelete(broker_ids)
+	err := c.ApiBrokersDelete(brokerIDs)
 	if err != nil {
 		return err
 	}

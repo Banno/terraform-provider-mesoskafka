@@ -226,7 +226,7 @@ func (c *Client) ApiBrokersCreate(BrokerIds []int) error {
 
 func (c *Client) ApiBrokersDelete(BrokerIds []int) error {
 
-	for brokerId, _ := range BrokerIds {
+	for _, brokerId := range BrokerIds {
 		_, err := c.ApiBrokersStop(brokerId)
 
 		if err != nil {
