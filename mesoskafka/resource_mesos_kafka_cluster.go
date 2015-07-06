@@ -65,17 +65,14 @@ func resourceMesosKafkaClusterDelete(d *schema.ResourceData, meta interface{}) e
 
 	status, _ := c.ApiBrokersStatus()
 
+	broker_ids := []int{}
 	for i := 0; i < len(status.Brokers); i++ {
-		_, err := c.ApiBrokersStop(i)
+		broker_ids = append(broker_ids, i)
+	}
 
-		if err != nil {
-			return err
-		}
-
-		_, err = c.ApiBrokersRemove(i)
-		if err != nil {
-			return err
-		}
+	err := c.ApiBrokersDelete(broker_ids)
+	if err != nil {
+		return err
 	}
 
 	return nil
