@@ -137,7 +137,7 @@ func (c *Client) ApiBrokersStatus() (*Status, error) {
 }
 
 func (c *Client) ApiBrokersAdd(BrokerId int) (*Brokers, error) {
-	url := fmt.Sprintf("/api/brokers/add?id=%d", BrokerId)
+	url := fmt.Sprintf("/api/brokers/add?id=%d&mem=256", BrokerId)
 	body, e := c.getJson(url)
 
 	if e != nil {
