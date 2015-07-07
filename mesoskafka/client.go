@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strconv"
 )
 
 type Client struct {
@@ -150,8 +151,19 @@ func (c *Client) ApiBrokersStatus() (*Status, error) {
 	return &status, nil
 }
 
+func queryStringFromBroker(broker *Broker) string {
+
+	params := url.Values{}
+	params.Add("id", broker.ID)
+	params.Add("cpus", strconv.FormatFloat(broker.Cpus, 'f', 6, 64))
+	params.Add("mem", strconv.Itoa(broker.Memory))
+	params.Add("heap", strconv.Itoa(broker.Heap))
+
+	return params.Encode()
+}
+
 func (c *Client) ApiBrokersAdd(broker *Broker) (*Brokers, error) {
-	url := fmt.Sprintf("/api/brokers/add?id=%s&mem=256", broker.ID)
+	url := fmt.Sprintf("/api/brokers/add?%s", queryStringFromBroker(broker))
 	body, e := c.getJson(url)
 
 	if e != nil {

@@ -148,6 +148,24 @@ func testAccCheckBrokerCount(broker_count int) resource.TestCheckFunc {
 			return fmt.Errorf("Create Cluster Failed: wrong number of brokers %v", status.Brokers)
 		}
 
+		// TODO: figure out how to get the current state instewad of hardcoding things like cpu amounts
+		// s.RootModule().Resources[""].
+
+		for _, broker := range status.Brokers {
+			if broker.Cpus != float64(0.1) {
+				return fmt.Errorf("Create Cluster Failed: wrong number of cpus %v", status.Brokers)
+			}
+
+			if broker.Memory != int(256) {
+				return fmt.Errorf("Create Cluster Failed: wrong amount of memory %v", status.Brokers)
+			}
+
+			if broker.Heap != int(128) {
+				return fmt.Errorf("Create Cluster Failed: wrong amount of heap %v", status.Brokers)
+			}
+
+		}
+
 		return nil
 	}
 }
