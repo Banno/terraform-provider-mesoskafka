@@ -108,8 +108,22 @@ type Status struct {
 }
 
 type Broker struct {
-	Id     string `json:"id"`
-	Active bool   `json:"active"`
+	ID           string   `json:"id"`
+	Active       bool     `json:"active"`
+	Memory       int      `json:"mem"`
+	Heap         int      `json:"heap"`
+	Cpus         float64  `json:"cpus"`
+	Log4jOptions string   `json:"log4jOptions"`
+	Constraints  string   `json:"constraints"`
+	JVMOptions   string   `json:"jvmOptions"`
+	Options      string   `json:"options"`
+	Failover     Failover `json:"failover"`
+}
+
+type Failover struct {
+	Delay    string `json:"delay"`
+	MaxDelay string `json:"maxDelay"`
+	MaxTries int    `json:"maxTries"`
 }
 
 type Brokers struct {
@@ -136,8 +150,8 @@ func (c *Client) ApiBrokersStatus() (*Status, error) {
 	return &status, nil
 }
 
-func (c *Client) ApiBrokersAdd(BrokerId int) (*Brokers, error) {
-	url := fmt.Sprintf("/api/brokers/add?id=%d&mem=256", BrokerId)
+func (c *Client) ApiBrokersAdd(broker *Broker) (*Brokers, error) {
+	url := fmt.Sprintf("/api/brokers/add?id=%s&mem=256", broker.ID)
 	body, e := c.getJson(url)
 
 	if e != nil {
@@ -153,8 +167,8 @@ func (c *Client) ApiBrokersAdd(BrokerId int) (*Brokers, error) {
 	return &response, nil
 }
 
-func (c *Client) ApiBrokersStart(BrokerId int) (*MutateStatus, error) {
-	url := fmt.Sprintf("/api/brokers/start?id=%d", BrokerId)
+func (c *Client) ApiBrokersStart(broker *Broker) (*MutateStatus, error) {
+	url := fmt.Sprintf("/api/brokers/start?id=%s", broker.ID)
 	body, e := c.getJson(url)
 
 	if e != nil {
@@ -204,16 +218,16 @@ func (c *Client) ApiBrokersRemove(BrokerId int) (*MutateStatus, error) {
 	return &response, nil
 }
 
-func (c *Client) ApiBrokersCreate(BrokerIds []int) error {
+func (c *Client) ApiBrokersCreate(brokers *Brokers) error {
 
-	for _, brokerId := range BrokerIds {
-		_, err := c.ApiBrokersAdd(brokerId)
+	for _, broker := range brokers.Brokers {
+		_, err := c.ApiBrokersAdd(&broker)
 
 		if err != nil {
 			return err
 		}
 
-		_, err = c.ApiBrokersStart(brokerId)
+		_, err = c.ApiBrokersStart(&broker)
 
 		if err != nil {
 			return err
