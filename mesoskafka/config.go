@@ -2,7 +2,7 @@ package mesoskafka
 
 type Config struct {
 	Url    string
-	client *Client
+	client Client
 }
 
 func (c *Config) loadAndValidate() error {

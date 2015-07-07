@@ -2,6 +2,7 @@ package mesoskafka
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -13,18 +14,18 @@ type Client struct {
 	httpClient *http.Client
 }
 
-func NewClient(hostname string, port int) *Client {
+func NewClient(hostname string, port int) Client {
 	return NewClientForUrl(fmt.Sprintf("https://%s:%d", hostname, port))
 }
 
-func NewClientForUrl(rawurl string) *Client {
+func NewClientForUrl(rawurl string) Client {
 	url, err := url.Parse(rawurl)
 
 	if err != nil {
 		panic(err)
 	}
 
-	c := &Client{
+	c := Client{
 		url:        url,
 		httpClient: &http.Client{},
 	}
@@ -98,5 +99,147 @@ func checkSuccessfullStatusCode(resp *http.Response) error {
 		responseBody := buf.String()
 		return fmt.Errorf("Returned HTTP status: %s \nReturned HTTP body: %s", resp.Status, responseBody)
 	}
+	return nil
+}
+
+type Status struct {
+	FrameworkID string   `json:"frameworkId"`
+	Brokers     []Broker `json:"brokers"`
+}
+
+type Broker struct {
+	Id     string `json:"id"`
+	Active bool   `json:"active"`
+}
+
+type Brokers struct {
+	Brokers []Broker `json:"brokers"`
+}
+
+type MutateStatus struct {
+	Status string `json:"started"`
+}
+
+func (c *Client) ApiBrokersStatus() (*Status, error) {
+	body, e := c.getJson("/api/brokers/status")
+
+	if e != nil {
+		return nil, e
+	}
+
+	var status Status
+	e = json.Unmarshal(body, &status)
+	if e != nil {
+		return nil, e
+	}
+
+	return &status, nil
+}
+
+func (c *Client) ApiBrokersAdd(BrokerId int) (*Brokers, error) {
+	url := fmt.Sprintf("/api/brokers/add?id=%d&mem=256", BrokerId)
+	body, e := c.getJson(url)
+
+	if e != nil {
+		return nil, e
+	}
+
+	var response Brokers
+	e = json.Unmarshal(body, &response)
+	if e != nil {
+		return nil, e
+	}
+
+	return &response, nil
+}
+
+func (c *Client) ApiBrokersStart(BrokerId int) (*MutateStatus, error) {
+	url := fmt.Sprintf("/api/brokers/start?id=%d", BrokerId)
+	body, e := c.getJson(url)
+
+	if e != nil {
+		return nil, e
+	}
+
+	var response MutateStatus
+	e = json.Unmarshal(body, &response)
+	if e != nil {
+		return nil, e
+	}
+
+	return &response, nil
+}
+
+func (c *Client) ApiBrokersStop(BrokerId int) (*MutateStatus, error) {
+	url := fmt.Sprintf("/api/brokers/stop?id=%d", BrokerId)
+	body, e := c.getJson(url)
+
+	if e != nil {
+		return nil, e
+	}
+
+	var response MutateStatus
+	e = json.Unmarshal(body, &response)
+	if e != nil {
+		return nil, e
+	}
+
+	return &response, nil
+}
+
+func (c *Client) ApiBrokersRemove(BrokerId int) (*MutateStatus, error) {
+	url := fmt.Sprintf("/api/brokers/remove?id=%d", BrokerId)
+	body, e := c.getJson(url)
+
+	if e != nil {
+		return nil, e
+	}
+
+	var response MutateStatus
+	e = json.Unmarshal(body, &response)
+	if e != nil {
+		return nil, e
+	}
+
+	return &response, nil
+}
+
+func (c *Client) ApiBrokersCreate(BrokerIds []int) error {
+
+	for _, brokerId := range BrokerIds {
+		_, err := c.ApiBrokersAdd(brokerId)
+
+		if err != nil {
+			return err
+		}
+
+		_, err = c.ApiBrokersStart(brokerId)
+
+		if err != nil {
+			return err
+		}
+
+	}
+
+	return nil
+}
+
+func (c *Client) ApiBrokersDelete(BrokerIds []int) error {
+
+	for _, brokerId := range BrokerIds {
+		_, err := c.ApiBrokersStop(brokerId)
+
+		if err != nil {
+			return err
+		}
+
+		_, err = c.ApiBrokersRemove(brokerId)
+
+		if err != nil {
+			return err
+		}
+
+	}
+
 	return nil
 }
