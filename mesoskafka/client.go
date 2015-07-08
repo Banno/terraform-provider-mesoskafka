@@ -172,6 +172,14 @@ func queryStringFromBroker(broker *Broker) string {
 		params.Add("jvmOptions", broker.JVMOptions)
 	}
 
+	if broker.Log4jOptions != "" {
+		params.Add("log4jOptions", broker.Log4jOptions)
+	}
+
+	if broker.Options != "" {
+		params.Add("options", broker.Options)
+	}
+
 	return params.Encode()
 }
 

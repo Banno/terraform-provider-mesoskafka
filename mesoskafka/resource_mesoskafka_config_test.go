@@ -2,11 +2,8 @@ package mesoskafka
 
 import (
 	"fmt"
-	"time"
-
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
-
 	"testing"
 )
 
@@ -28,26 +25,29 @@ resource "mesoskafka_cluster" "broker-example" {
 	memory = 256
 	heap = 128
 	jvm_options = "-Xms128m"
+	logfourj_options = "file:log4j.properties"
+	options = "log.dirs=/tmp/kafka/"
 }
 `
 
-func TestAccMesosKafkaCluster_basic(t *testing.T) {
+// func TestAccMesosKafkaCluster_basic(t *testing.T) {
 
-	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccDeleteCluster(),
-		Steps: []resource.TestStep{
-			resource.TestStep{
-				Config: mesosKafkaClusterResource_basic,
-				Check: resource.ComposeTestCheckFunc(
-					testAccReadCluster("mesoskafka_cluster.broker-example"),
-					testAccCheckBroker(1, 1, 2048, 1024, ""),
-				),
-			},
-		},
-	})
-}
+// 	resource.Test(t, resource.TestCase{
+// 		PreCheck:     func() { testAccPreCheck(t) },
+// 		Providers:    testAccProviders,
+// 		CheckDestroy: testAccDeleteCluster(),
+// 		Steps: []resource.TestStep{
+// 			resource.TestStep{
+// 				Config: mesosKafkaClusterResource_basic,
+// 				Check: resource.ComposeTestCheckFunc(
+// 					testAccReadCluster("mesoskafka_cluster.broker-example"),
+// 					testAccCheckBrokerCount(1),
+// 					testAccCheckBrokerAttributes_basic(),
+// 				),
+// 			},
+// 		},
+// 	})
+// }
 
 // func TestAccMesosKafkaCluster_addMoreBrokers(t *testing.T) {
 //
@@ -110,7 +110,8 @@ func TestAccMesosKafkaCluster_optionals_basic(t *testing.T) {
 				Config: mesosKafkaClusterResource_optionals_basic,
 				Check: resource.ComposeTestCheckFunc(
 					testAccReadCluster("mesoskafka_cluster.broker-example"),
-					testAccCheckBroker(1, 0.1, 256, 128, "-Xms128m"),
+					testAccCheckBrokerCount(1),
+					testAccCheckBrokerAttributes_optionals(),
 				),
 			},
 		},
@@ -133,40 +134,89 @@ func testAccReadCluster(name string) resource.TestCheckFunc {
 	}
 }
 
-func testAccCheckBroker(broker_count int, cpus float64, memory int, heap int, jvmOptions string) resource.TestCheckFunc {
+func testAccCheckBrokerCount(broker_count int) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
+
 		client := testAccProvider.Meta().(Client)
 
 		status, err := client.ApiBrokersStatus()
-
 		if err != nil {
-			return fmt.Errorf("Error during backends read: %v", err)
+			panic(fmt.Errorf("Error during backends read: %v", err))
 		}
-
-		time.Sleep(5 * time.Second)
 
 		if len(status.Brokers) != broker_count {
-			return fmt.Errorf("Create Cluster Failed: wrong number of brokers %v", status.Brokers)
+			return fmt.Errorf("Create Cluster Failed: wrong number of brokers %#v", status.Brokers)
 		}
+		return nil
+	}
+}
 
+func testAccCheckBrokerAttributes_basic() resource.TestCheckFunc {
+	return func(s *terraform.State) error {
 		// TODO: figure out how to get the current state instewad of hardcoding things like cpu amounts
 		// s.RootModule().Resources[""].
 
+		client := testAccProvider.Meta().(Client)
+
+		status, err := client.ApiBrokersStatus()
+		if err != nil {
+			panic(fmt.Errorf("Error during backends read: %v", err))
+		}
+
 		for _, broker := range status.Brokers {
-			if broker.Cpus != cpus {
-				return fmt.Errorf("Create Cluster Failed: wrong number of cpus %v", status.Brokers)
+			if broker.Cpus != float64(1) {
+				return fmt.Errorf("Create Cluster Failed: wrong number of cpus %#v", status.Brokers)
 			}
 
-			if broker.Memory != memory {
-				return fmt.Errorf("Create Cluster Failed: wrong amount of memory %v", status.Brokers)
+			if broker.Memory != int(2048) {
+				return fmt.Errorf("Create Cluster Failed: wrong amount of memory %#v", status.Brokers)
 			}
 
-			if broker.Heap != heap {
-				return fmt.Errorf("Create Cluster Failed: wrong amount of heap %v", status.Brokers)
+			if broker.Heap != int(128) {
+				return fmt.Errorf("Create Cluster Failed: wrong amount of heap #%v", status.Brokers)
 			}
 
-			if broker.JVMOptions != jvmOptions {
-				return fmt.Errorf("Create Cluster Failed: wrong jvm-options %v", status.Brokers)
+		}
+
+		return nil
+	}
+}
+
+func testAccCheckBrokerAttributes_optionals() resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		// TODO: figure out how to get the current state instewad of hardcoding things like cpu amounts
+		// s.RootModule().Resources[""].
+
+		client := testAccProvider.Meta().(Client)
+
+		status, err := client.ApiBrokersStatus()
+		if err != nil {
+			panic(fmt.Errorf("Error during backends read: %#v", err))
+		}
+
+		for _, broker := range status.Brokers {
+			if broker.Cpus != float64(0.1) {
+				return fmt.Errorf("Create Cluster Failed: wrong number of cpus %#v", status.Brokers)
+			}
+
+			if broker.Memory != int(256) {
+				return fmt.Errorf("Create Cluster Failed: wrong amount of memory %#v", status.Brokers)
+			}
+
+			if broker.Heap != int(128) {
+				return fmt.Errorf("Create Cluster Failed: wrong amount of heap %#v", status.Brokers)
+			}
+
+			if broker.JVMOptions != "-Xms128m" {
+				return fmt.Errorf("Create Cluster Failed: wrong jvm-options %#v", status.Brokers)
+			}
+
+			if broker.Log4jOptions != "file:log4j.properties" {
+				return fmt.Errorf("Create Cluster Failed: wrong logfourj_options %#v", status.Brokers)
+			}
+
+			if broker.Options != "log.dirs=/tmp/kafka/" {
+				return fmt.Errorf("Create Cluster Failed: wrong options %#v", status.Brokers)
 			}
 
 		}
