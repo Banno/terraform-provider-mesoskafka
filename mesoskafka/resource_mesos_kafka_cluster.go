@@ -2,9 +2,10 @@ package mesoskafka
 
 import (
 	"fmt"
-	"github.com/hashicorp/terraform/helper/schema"
 	"sort"
 	"strconv"
+
+	"github.com/hashicorp/terraform/helper/schema"
 )
 
 func resourceMesosKafkaCluster() *schema.Resource {
@@ -18,6 +19,56 @@ func resourceMesosKafkaCluster() *schema.Resource {
 			"broker_count": &schema.Schema{
 				Type:     schema.TypeInt,
 				Required: true,
+				ForceNew: false,
+			},
+			"constraints": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: false,
+			},
+			"cpus": &schema.Schema{
+				Type:     schema.TypeFloat,
+				Optional: true,
+				ForceNew: false,
+			},
+			"memory": &schema.Schema{
+				Type:     schema.TypeInt,
+				Optional: true,
+				ForceNew: false,
+			},
+			"heap": &schema.Schema{
+				Type:     schema.TypeInt,
+				Optional: true,
+				ForceNew: false,
+			},
+			"failover_delay": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: false,
+			},
+			"failover_max_delay": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: false,
+			},
+			"failover_max_tries": &schema.Schema{
+				Type:     schema.TypeInt,
+				Optional: true,
+				ForceNew: false,
+			},
+			"jvm_options": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: false,
+			},
+			"logfourj_options": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: false,
+			},
+			"options": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
 				ForceNew: false,
 			},
 		},
@@ -34,7 +85,8 @@ func resourceMesosKafkaClusterCreate(d *schema.ResourceData, meta interface{}) e
 		brokerIDs = append(brokerIDs, i)
 	}
 
-	err := c.ApiBrokersCreate(brokerIDs)
+	expectedBrokers := populateBrokerFromResourceData(brokerIDs, d)
+	err := c.ApiBrokersCreate(expectedBrokers)
 
 	if err != nil {
 		return err
@@ -75,7 +127,7 @@ func resourceMesosKafkaClusterUpdate(d *schema.ResourceData, meta interface{}) e
 
 		currentBrokers := []int{}
 		for _, broker := range status.Brokers {
-			_id, _ := strconv.ParseInt(broker.Id, 10, 0)
+			_id, _ := strconv.ParseInt(broker.ID, 10, 0)
 			id := int(_id)
 			currentBrokers = append(currentBrokers, id)
 		}
@@ -95,7 +147,7 @@ func resourceMesosKafkaClusterUpdate(d *schema.ResourceData, meta interface{}) e
 		maxBrokerID := 0
 
 		for _, broker := range status.Brokers {
-			_id, _ := strconv.ParseInt(broker.Id, 10, 0)
+			_id, _ := strconv.ParseInt(broker.ID, 10, 0)
 			id := int(_id)
 			if id > maxBrokerID {
 				maxBrokerID = id
@@ -107,7 +159,8 @@ func resourceMesosKafkaClusterUpdate(d *schema.ResourceData, meta interface{}) e
 			brokerIDs = append(brokerIDs, j)
 		}
 
-		err := c.ApiBrokersCreate(brokerIDs)
+		brokers := populateBrokerFromResourceData(brokerIDs, d)
+		err := c.ApiBrokersCreate(brokers)
 		if err != nil {
 			return err
 		}
@@ -135,4 +188,32 @@ func resourceMesosKafkaClusterDelete(d *schema.ResourceData, meta interface{}) e
 	}
 
 	return nil
+}
+
+func populateBrokerFromResourceData(brokerIDs []int, d *schema.ResourceData) *Brokers {
+	brokers := Brokers{}
+	for _, brokerID := range brokerIDs {
+		broker := Broker{
+			ID:           strconv.Itoa(brokerID),
+			Memory:       d.Get("memory").(int),
+			Heap:         d.Get("heap").(int),
+			Cpus:         d.Get("cpus").(float64),
+			Constraints:  d.Get("constraints").(string),
+			Log4jOptions: d.Get("logfourj_options").(string),
+			JVMOptions:   d.Get("jvm_options").(string),
+			Options:      d.Get("options").(string),
+			Failover: Failover{
+				Delay:    d.Get("failover_delay").(string),
+				MaxDelay: d.Get("failover_max_delay").(string),
+				MaxTries: d.Get("failover_max_tries").(int),
+			},
+		}
+
+		if v, ok := d.GetOk("active"); ok {
+			broker.Active = v.(bool)
+		}
+
+		brokers.Brokers = append(brokers.Brokers, broker)
+	}
+	return &brokers
 }
