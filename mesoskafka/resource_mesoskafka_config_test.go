@@ -2,9 +2,10 @@ package mesoskafka
 
 import (
 	"fmt"
+	"testing"
+
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
-	"testing"
 )
 
 const mesosKafkaClusterResource_basic = `
@@ -27,6 +28,9 @@ resource "mesoskafka_cluster" "broker-example" {
 	jvm_options = "-Xms128m"
 	logfourj_options = "file:log4j.properties"
 	options = "log.dirs=/tmp/kafka/"
+	failover_delay = "17s"
+	failover_max_delay = "14m"
+	failover_max_tries = 42
 }
 `
 
@@ -217,6 +221,18 @@ func testAccCheckBrokerAttributes_optionals() resource.TestCheckFunc {
 
 			if broker.Options != "log.dirs=/tmp/kafka/" {
 				return fmt.Errorf("Create Cluster Failed: wrong options %#v", status.Brokers)
+			}
+
+			if broker.Failover.Delay != "17s" {
+				return fmt.Errorf("Create Cluster Failed: wrong failover-delay %#v", status.Brokers)
+			}
+
+			if broker.Failover.MaxDelay != "14m" {
+				return fmt.Errorf("Create Cluster Failed: wrong failover-max-delay %#v", status.Brokers)
+			}
+
+			if broker.Failover.MaxTries != int(42) {
+				return fmt.Errorf("Create Cluster Failed: wrong failover-max-tries %#v", status.Brokers)
 			}
 
 		}

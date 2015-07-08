@@ -1,1 +1,3 @@
 terraform-provider-mesoskafka
+terraform.tfstate
+terraform.tfstate.backup
