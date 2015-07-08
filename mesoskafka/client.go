@@ -155,9 +155,22 @@ func queryStringFromBroker(broker *Broker) string {
 
 	params := url.Values{}
 	params.Add("id", broker.ID)
-	params.Add("cpus", strconv.FormatFloat(broker.Cpus, 'f', 6, 64))
-	params.Add("mem", strconv.Itoa(broker.Memory))
-	params.Add("heap", strconv.Itoa(broker.Heap))
+
+	if broker.Cpus != 0 {
+		params.Add("cpus", strconv.FormatFloat(broker.Cpus, 'f', 6, 64))
+	}
+
+	if broker.Memory != 0 {
+		params.Add("mem", strconv.Itoa(broker.Memory))
+	}
+
+	if broker.Heap != 0 {
+		params.Add("heap", strconv.Itoa(broker.Heap))
+	}
+
+	if broker.JVMOptions != "" {
+		params.Add("jvmOptions", broker.JVMOptions)
+	}
 
 	return params.Encode()
 }
