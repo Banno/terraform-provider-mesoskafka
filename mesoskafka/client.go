@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"time"
 )
 
 type Client struct {
@@ -133,6 +134,12 @@ type Brokers struct {
 
 type MutateStatus struct {
 	Status string `json:"started"`
+}
+
+type RebalanceStatus struct {
+	Status     string `json:"status"`
+	StatusCode int    `json:"status_code"`
+	Message    string `json:"message"`
 }
 
 func (c *Client) ApiBrokersStatus() (*Status, error) {
@@ -277,6 +284,7 @@ func (c *Client) ApiBrokersCreate(brokers *Brokers) error {
 			return err
 		}
 
+		c.ApiBrokerRebalance()
 	}
 
 	return nil
@@ -297,7 +305,57 @@ func (c *Client) ApiBrokersDelete(BrokerIds []int) error {
 			return err
 		}
 
+		c.ApiBrokerRebalance()
 	}
 
 	return nil
+}
+
+// This is a blocking call that returns when a rebalance is complete.
+func (c *Client) ApiBrokerRebalance() error {
+	url := "/api/brokers/rebalance?id=*"
+	body, e := c.getJson(url)
+
+	if e != nil {
+		return e
+	}
+
+	var response MutateStatus
+	e = json.Unmarshal(body, &response)
+	if e != nil {
+		return e
+	}
+
+	for {
+		response, err := c.ApiBrokersRebalanceStatus()
+		if err != err {
+			return err
+		}
+
+		if response.Status == "idle" {
+			break
+		}
+
+		fmt.Println("Waiting for rebalance...")
+		time.Sleep(time.Second * 5)
+	}
+
+	return nil
+}
+
+func (c *Client) ApiBrokersRebalanceStatus() (*RebalanceStatus, error) {
+	url := "/api/brokers/rebalance"
+	body, e := c.getJson(url)
+
+	if e != nil {
+		return nil, e
+	}
+
+	var response RebalanceStatus
+	e = json.Unmarshal(body, &response)
+	if e != nil {
+		return nil, e
+	}
+
+	return &response, nil
 }
