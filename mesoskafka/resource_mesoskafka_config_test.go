@@ -34,74 +34,74 @@ resource "mesoskafka_cluster" "broker-example" {
 }
 `
 
-// func TestAccMesosKafkaCluster_basic(t *testing.T) {
+func TestAccMesosKafkaCluster_basic(t *testing.T) {
 
-// 	resource.Test(t, resource.TestCase{
-// 		PreCheck:     func() { testAccPreCheck(t) },
-// 		Providers:    testAccProviders,
-// 		CheckDestroy: testAccDeleteCluster(),
-// 		Steps: []resource.TestStep{
-// 			resource.TestStep{
-// 				Config: mesosKafkaClusterResource_basic,
-// 				Check: resource.ComposeTestCheckFunc(
-// 					testAccReadCluster("mesoskafka_cluster.broker-example"),
-// 					testAccCheckBrokerCount(1),
-// 					testAccCheckBrokerAttributes_basic(),
-// 				),
-// 			},
-// 		},
-// 	})
-// }
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccDeleteCluster(),
+		Steps: []resource.TestStep{
+			resource.TestStep{
+				Config: mesosKafkaClusterResource_basic,
+				Check: resource.ComposeTestCheckFunc(
+					testAccReadCluster("mesoskafka_cluster.broker-example"),
+					testAccCheckBrokerCount(1),
+					testAccCheckBrokerAttributes_basic(),
+				),
+			},
+		},
+	})
+}
 
-// func TestAccMesosKafkaCluster_addMoreBrokers(t *testing.T) {
-//
-// 	resource.Test(t, resource.TestCase{
-// 		PreCheck:     func() { testAccPreCheck(t) },
-// 		Providers:    testAccProviders,
-// 		CheckDestroy: testAccDeleteCluster(),
-// 		Steps: []resource.TestStep{
-// 			resource.TestStep{
-// 				Config: mesosKafkaClusterResource_basic,
-// 				Check: resource.ComposeTestCheckFunc(
-// 					testAccReadCluster("mesoskafka_cluster.broker-example"),
-// 					testAccCheckBrokerCount(1),
-// 				),
-// 			},
-// 			resource.TestStep{
-// 				Config: mesosKafkaClusterResource_add_brokers,
-// 				Check: resource.ComposeTestCheckFunc(
-// 					testAccReadCluster("mesoskafka_cluster.broker-example"),
-// 					testAccCheckBrokerCount(2),
-// 				),
-// 			},
-// 		},
-// 	})
-// }
-//
-// func TestAccMesosKafkaCluster_removeBrokers(t *testing.T) {
-//
-// 	resource.Test(t, resource.TestCase{
-// 		PreCheck:     func() { testAccPreCheck(t) },
-// 		Providers:    testAccProviders,
-// 		CheckDestroy: testAccDeleteCluster(),
-// 		Steps: []resource.TestStep{
-// 			resource.TestStep{
-// 				Config: mesosKafkaClusterResource_add_brokers,
-// 				Check: resource.ComposeTestCheckFunc(
-// 					testAccReadCluster("mesoskafka_cluster.broker-example"),
-// 					testAccCheckBrokerCount(2),
-// 				),
-// 			},
-// 			resource.TestStep{
-// 				Config: mesosKafkaClusterResource_basic,
-// 				Check: resource.ComposeTestCheckFunc(
-// 					testAccReadCluster("mesoskafka_cluster.broker-example"),
-// 					testAccCheckBrokerCount(1),
-// 				),
-// 			},
-// 		},
-// 	})
-// }
+func TestAccMesosKafkaCluster_addMoreBrokers(t *testing.T) {
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccDeleteCluster(),
+		Steps: []resource.TestStep{
+			resource.TestStep{
+				Config: mesosKafkaClusterResource_basic,
+				Check: resource.ComposeTestCheckFunc(
+					testAccReadCluster("mesoskafka_cluster.broker-example"),
+					testAccCheckBrokerCount(1),
+				),
+			},
+			resource.TestStep{
+				Config: mesosKafkaClusterResource_add_brokers,
+				Check: resource.ComposeTestCheckFunc(
+					testAccReadCluster("mesoskafka_cluster.broker-example"),
+					testAccCheckBrokerCount(2),
+				),
+			},
+		},
+	})
+}
+
+func TestAccMesosKafkaCluster_removeBrokers(t *testing.T) {
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccDeleteCluster(),
+		Steps: []resource.TestStep{
+			resource.TestStep{
+				Config: mesosKafkaClusterResource_add_brokers,
+				Check: resource.ComposeTestCheckFunc(
+					testAccReadCluster("mesoskafka_cluster.broker-example"),
+					testAccCheckBrokerCount(2),
+				),
+			},
+			resource.TestStep{
+				Config: mesosKafkaClusterResource_basic,
+				Check: resource.ComposeTestCheckFunc(
+					testAccReadCluster("mesoskafka_cluster.broker-example"),
+					testAccCheckBrokerCount(1),
+				),
+			},
+		},
+	})
+}
 
 func TestAccMesosKafkaCluster_optionals_basic(t *testing.T) {
 
