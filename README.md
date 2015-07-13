@@ -33,6 +33,6 @@ resource "mesoskafka_cluster" "my_cluster" {
 
 ##How to build
 ```bash
-$ go get
+$ go get github.com/Banno/terraform-provider-mesoskafka
 $ go install
 ```
