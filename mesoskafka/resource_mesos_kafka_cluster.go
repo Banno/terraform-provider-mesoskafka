@@ -1,7 +1,6 @@
 package mesoskafka
 
 import (
-	"fmt"
 	"sort"
 	"strconv"
 
@@ -140,7 +139,16 @@ func resourceMesosKafkaClusterUpdate(d *schema.ResourceData, meta interface{}) e
 			return err
 		}
 
-	} else if brokerCount > currentCount {
+	}
+
+	if currentCount > 0 && runOptionsHaveChanged(d, *status) {
+		// update currently running brokers with new schema vars
+		status, _ := c.ApiBrokersStatus()
+
+		c.ApiBrokersUpdate(getUpdatedBrokers(d, *status))
+	}
+
+	if brokerCount > currentCount {
 		// add some brokers
 		howMany := brokerCount - currentCount
 
@@ -165,8 +173,6 @@ func resourceMesosKafkaClusterUpdate(d *schema.ResourceData, meta interface{}) e
 			return err
 		}
 
-	} else {
-		fmt.Println("Broker counts are the same")
 	}
 
 	return nil
@@ -216,4 +222,66 @@ func populateBrokerFromResourceData(brokerIDs []int, d *schema.ResourceData) *Br
 		brokers.Brokers = append(brokers.Brokers, broker)
 	}
 	return &brokers
+}
+
+func runOptionsHaveChanged(d *schema.ResourceData, status Status) bool {
+
+	currentBroker := status.Brokers[0]
+	currentID, _ := strconv.Atoi(currentBroker.ID)
+	expectedBroker := populateBrokerFromResourceData([]int{currentID}, d).Brokers[0]
+
+	if currentBroker.Memory != expectedBroker.Memory {
+		return true
+	}
+
+	if currentBroker.Heap != expectedBroker.Heap {
+		return true
+	}
+
+	if currentBroker.Cpus != expectedBroker.Cpus {
+		return true
+	}
+
+	if currentBroker.Constraints != expectedBroker.Constraints {
+		return true
+	}
+
+	if currentBroker.Log4jOptions != expectedBroker.Log4jOptions {
+		return true
+	}
+
+	if currentBroker.JVMOptions != expectedBroker.JVMOptions {
+		return true
+	}
+
+	if currentBroker.Options != expectedBroker.Options {
+		return true
+	}
+
+	if currentBroker.Failover.Delay != expectedBroker.Failover.Delay {
+		return true
+	}
+
+	if currentBroker.Failover.MaxDelay != expectedBroker.Failover.MaxDelay {
+		return true
+	}
+
+	if currentBroker.Failover.MaxTries != expectedBroker.Failover.MaxTries {
+		return true
+	}
+
+	return false
+}
+
+func getUpdatedBrokers(d *schema.ResourceData, status Status) []Broker {
+
+	brokerIds := []int{}
+	for _, broker := range status.Brokers {
+		id, _ := strconv.Atoi(broker.ID)
+		brokerIds = append(brokerIds, id)
+	}
+
+	updatedBrokers := populateBrokerFromResourceData(brokerIds, d).Brokers
+
+	return updatedBrokers
 }
