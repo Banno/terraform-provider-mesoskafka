@@ -34,6 +34,21 @@ resource "mesoskafka_cluster" "broker-example" {
 }
 `
 
+const mesosKafkaClusterResource_optionals_basic_update = `
+resource "mesoskafka_cluster" "broker-example" {
+  broker_count = 1
+	cpus = 1
+	memory = 8096
+	heap = 256
+	jvm_options = ""
+	logfourj_options = ""
+	options = ""
+	failover_delay = "99s"
+	failover_max_delay = "5m"
+	failover_max_tries = 5
+}
+`
+
 func TestAccMesosKafkaCluster_basic(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
@@ -116,6 +131,33 @@ func TestAccMesosKafkaCluster_optionals_basic(t *testing.T) {
 					testAccReadCluster("mesoskafka_cluster.broker-example"),
 					testAccCheckBrokerCount(1),
 					testAccCheckBrokerAttributes_optionals(),
+				),
+			},
+		},
+	})
+}
+
+func TestAccMesosKafkaCluster_optionals_basic_update(t *testing.T) {
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccDeleteCluster(),
+		Steps: []resource.TestStep{
+			resource.TestStep{
+				Config: mesosKafkaClusterResource_optionals_basic,
+				Check: resource.ComposeTestCheckFunc(
+					testAccReadCluster("mesoskafka_cluster.broker-example"),
+					testAccCheckBrokerCount(1),
+					testAccCheckBrokerAttributes_optionals(),
+				),
+			},
+			resource.TestStep{
+				Config: mesosKafkaClusterResource_optionals_basic_update,
+				Check: resource.ComposeTestCheckFunc(
+					testAccReadCluster("mesoskafka_cluster.broker-example"),
+					testAccCheckBrokerCount(1),
+					testAccCheckBrokerAttributes_optionals_update(),
 				),
 			},
 		},
@@ -232,6 +274,61 @@ func testAccCheckBrokerAttributes_optionals() resource.TestCheckFunc {
 			}
 
 			if broker.Failover.MaxTries != int(42) {
+				return fmt.Errorf("Create Cluster Failed: wrong failover-max-tries %#v", status.Brokers)
+			}
+
+		}
+
+		return nil
+	}
+}
+
+func testAccCheckBrokerAttributes_optionals_update() resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		// TODO: figure out how to get the current state instewad of hardcoding things like cpu amounts
+		// s.RootModule().Resources[""].
+
+		client := testAccProvider.Meta().(Client)
+
+		status, err := client.ApiBrokersStatus()
+		if err != nil {
+			panic(fmt.Errorf("Error during backends read: %#v", err))
+		}
+
+		for _, broker := range status.Brokers {
+			if broker.Cpus != float64(1) {
+				return fmt.Errorf("Create Cluster Failed: wrong number of cpus %#v", status.Brokers)
+			}
+
+			if broker.Memory != int(8096) {
+				return fmt.Errorf("Create Cluster Failed: wrong amount of memory %#v", status.Brokers)
+			}
+
+			if broker.Heap != int(256) {
+				return fmt.Errorf("Create Cluster Failed: wrong amount of heap %#v", status.Brokers)
+			}
+
+			if broker.JVMOptions != "" {
+				return fmt.Errorf("Create Cluster Failed: wrong jvm-options %#v", status.Brokers)
+			}
+
+			if broker.Log4jOptions != "" {
+				return fmt.Errorf("Create Cluster Failed: wrong logfourj_options %#v", status.Brokers)
+			}
+
+			if broker.Options != "" {
+				return fmt.Errorf("Create Cluster Failed: wrong options %#v", status.Brokers)
+			}
+
+			if broker.Failover.Delay != "99s" {
+				return fmt.Errorf("Create Cluster Failed: wrong failover-delay %#v", status.Brokers)
+			}
+
+			if broker.Failover.MaxDelay != "5m" {
+				return fmt.Errorf("Create Cluster Failed: wrong failover-max-delay %#v", status.Brokers)
+			}
+
+			if broker.Failover.MaxTries != int(5) {
 				return fmt.Errorf("Create Cluster Failed: wrong failover-max-tries %#v", status.Brokers)
 			}
 

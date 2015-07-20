@@ -175,25 +175,16 @@ func queryStringFromBroker(broker *Broker) string {
 		params.Add("heap", strconv.Itoa(broker.Heap))
 	}
 
-	if broker.JVMOptions != "" {
-		params.Add("jvmOptions", broker.JVMOptions)
-	}
+	params.Add("jvmOptions", broker.JVMOptions)
 
-	if broker.Log4jOptions != "" {
-		params.Add("log4jOptions", broker.Log4jOptions)
-	}
+	params.Add("log4jOptions", broker.Log4jOptions)
 
-	if broker.Options != "" {
-		params.Add("options", broker.Options)
-	}
+	params.Add("options", broker.Options)
 
-	if broker.Failover.Delay != "" {
-		params.Add("failoverDelay", broker.Failover.Delay)
-	}
+	params.Add("failoverDelay", broker.Failover.Delay)
 
-	if broker.Failover.MaxDelay != "" {
-		params.Add("failoverMaxDelay", broker.Failover.MaxDelay)
-	}
+	params.Add("failoverMaxDelay", broker.Failover.MaxDelay)
+
 	if broker.Failover.MaxTries != 0 {
 		params.Add("failoverMaxTries", strconv.Itoa(broker.Failover.MaxTries))
 	}
@@ -254,6 +245,23 @@ func (c *Client) ApiBrokersStop(BrokerId int) (*MutateStatus, error) {
 
 func (c *Client) ApiBrokersRemove(BrokerId int) (*MutateStatus, error) {
 	url := fmt.Sprintf("/api/brokers/remove?id=%d", BrokerId)
+	body, e := c.getJson(url)
+
+	if e != nil {
+		return nil, e
+	}
+
+	var response MutateStatus
+	e = json.Unmarshal(body, &response)
+	if e != nil {
+		return nil, e
+	}
+
+	return &response, nil
+}
+
+func (c *Client) ApiBrokerUpdate(broker *Broker) (*MutateStatus, error) {
+	url := fmt.Sprintf("/api/brokers/update?%s", queryStringFromBroker(broker))
 	body, e := c.getJson(url)
 
 	if e != nil {
@@ -358,4 +366,33 @@ func (c *Client) ApiBrokersRebalanceStatus() (*RebalanceStatus, error) {
 	}
 
 	return &response, nil
+}
+
+func (c *Client) ApiBrokersUpdate(brokers []Broker) error {
+
+	for _, broker := range brokers {
+		id, err := strconv.Atoi(broker.ID)
+		if err != nil {
+			return err
+		}
+
+		_, err = c.ApiBrokersStop(id)
+		if err != nil {
+			return err
+		}
+
+		_, err = c.ApiBrokerUpdate(&broker)
+		if err != nil {
+			return err
+		}
+
+		_, err = c.ApiBrokersStart(&broker)
+		if err != nil {
+			return err
+		}
+
+		c.ApiBrokerRebalance()
+	}
+
+	return nil
 }
