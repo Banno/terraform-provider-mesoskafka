@@ -181,9 +181,13 @@ func queryStringFromBroker(broker *Broker) string {
 
 	params.Add("options", broker.Options)
 
-	params.Add("failoverDelay", broker.Failover.Delay)
+	if broker.Failover.Delay != "" {
+		params.Add("failoverDelay", broker.Failover.Delay)
+	}
 
-	params.Add("failoverMaxDelay", broker.Failover.MaxDelay)
+	if broker.Failover.MaxDelay != "" {
+		params.Add("failoverMaxDelay", broker.Failover.MaxDelay)
+	}
 
 	if broker.Failover.MaxTries != 0 {
 		params.Add("failoverMaxTries", strconv.Itoa(broker.Failover.MaxTries))
