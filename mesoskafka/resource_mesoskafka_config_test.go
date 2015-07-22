@@ -218,7 +218,7 @@ func testAccCheckBrokerAttributes_basic() resource.TestCheckFunc {
 				return fmt.Errorf("Create Cluster Failed: wrong amount of memory %#v", status.Brokers)
 			}
 
-			if broker.Heap != int(128) {
+			if broker.Heap != int(1024) {
 				return fmt.Errorf("Create Cluster Failed: wrong amount of heap #%v", status.Brokers)
 			}
 
