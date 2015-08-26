@@ -28,6 +28,7 @@ resource "mesoskafka_cluster" "broker-example" {
 	jvm_options = "-Xms128m"
 	logfourj_options = "file:log4j.properties"
 	options = "log.dirs=/tmp/kafka/"
+	constraints = "hostname=unique"
 	failover_delay = "17s"
 	failover_max_delay = "14m"
 	failover_max_tries = 42
@@ -43,6 +44,7 @@ resource "mesoskafka_cluster" "broker-example" {
 	jvm_options = ""
 	logfourj_options = ""
 	options = ""
+	constraints = ""
 	failover_delay = "99s"
 	failover_max_delay = "5m"
 	failover_max_tries = 5
@@ -199,7 +201,7 @@ func testAccCheckBrokerCount(broker_count int) resource.TestCheckFunc {
 
 func testAccCheckBrokerAttributes_basic() resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		// TODO: figure out how to get the current state instewad of hardcoding things like cpu amounts
+		// TODO: figure out how to get the current state instead of hardcoding things like cpu amounts
 		// s.RootModule().Resources[""].
 
 		client := testAccProvider.Meta().(Client)
@@ -230,7 +232,7 @@ func testAccCheckBrokerAttributes_basic() resource.TestCheckFunc {
 
 func testAccCheckBrokerAttributes_optionals() resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		// TODO: figure out how to get the current state instewad of hardcoding things like cpu amounts
+		// TODO: figure out how to get the current state instead of hardcoding things like cpu amounts
 		// s.RootModule().Resources[""].
 
 		client := testAccProvider.Meta().(Client)
@@ -265,6 +267,10 @@ func testAccCheckBrokerAttributes_optionals() resource.TestCheckFunc {
 				return fmt.Errorf("Create Cluster Failed: wrong options %#v", status.Brokers)
 			}
 
+			if broker.Constraints != "hostname=unique" {
+				return fmt.Errorf("Create Cluster Failed: wrong constraints %#v", status.Brokers)
+			}
+
 			if broker.Failover.Delay != "17s" {
 				return fmt.Errorf("Create Cluster Failed: wrong failover-delay %#v", status.Brokers)
 			}
@@ -285,7 +291,7 @@ func testAccCheckBrokerAttributes_optionals() resource.TestCheckFunc {
 
 func testAccCheckBrokerAttributes_optionals_update() resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		// TODO: figure out how to get the current state instewad of hardcoding things like cpu amounts
+		// TODO: figure out how to get the current state instead of hardcoding things like cpu amounts
 		// s.RootModule().Resources[""].
 
 		client := testAccProvider.Meta().(Client)
@@ -318,6 +324,10 @@ func testAccCheckBrokerAttributes_optionals_update() resource.TestCheckFunc {
 
 			if broker.Options != "" {
 				return fmt.Errorf("Create Cluster Failed: wrong options %#v", status.Brokers)
+			}
+
+			if broker.Constraints != "" {
+				return fmt.Errorf("Create Cluster Failed: wrong constraints %#v", status.Brokers)
 			}
 
 			if broker.Failover.Delay != "99s" {

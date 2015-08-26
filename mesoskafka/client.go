@@ -181,6 +181,8 @@ func queryStringFromBroker(broker *Broker) string {
 
 	params.Add("options", broker.Options)
 
+	params.Add("constraints", broker.Constraints)
+
 	if broker.Failover.Delay != "" {
 		params.Add("failoverDelay", broker.Failover.Delay)
 	}
