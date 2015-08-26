@@ -199,7 +199,7 @@ func testAccCheckBrokerCount(broker_count int) resource.TestCheckFunc {
 
 func testAccCheckBrokerAttributes_basic() resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		// TODO: figure out how to get the current state instewad of hardcoding things like cpu amounts
+		// TODO: figure out how to get the current state instead of hardcoding things like cpu amounts
 		// s.RootModule().Resources[""].
 
 		client := testAccProvider.Meta().(Client)
@@ -230,7 +230,7 @@ func testAccCheckBrokerAttributes_basic() resource.TestCheckFunc {
 
 func testAccCheckBrokerAttributes_optionals() resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		// TODO: figure out how to get the current state instewad of hardcoding things like cpu amounts
+		// TODO: figure out how to get the current state instead of hardcoding things like cpu amounts
 		// s.RootModule().Resources[""].
 
 		client := testAccProvider.Meta().(Client)
@@ -285,7 +285,7 @@ func testAccCheckBrokerAttributes_optionals() resource.TestCheckFunc {
 
 func testAccCheckBrokerAttributes_optionals_update() resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		// TODO: figure out how to get the current state instewad of hardcoding things like cpu amounts
+		// TODO: figure out how to get the current state instead of hardcoding things like cpu amounts
 		// s.RootModule().Resources[""].
 
 		client := testAccProvider.Meta().(Client)
