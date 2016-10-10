@@ -1,9 +1,9 @@
-#Mesos Kafka Provider For Terraform
+# Mesos Kafka Provider For Terraform
 
 Allows you to define Kafka brokers that run inside Mesos using the
 [Mesos Kafka Framework](https://github.com/mesos/kafka)
 
-##Requirements: 
+## Requirements:
 * A working Mesos cluster (with the mesos executor enabled)
 * Mesos slaves running Java 8
 * A running [Mesos Kafka Framework](https://github.com/mesos/kafka)
@@ -22,7 +22,7 @@ or with environmental variables:
 export MESOS_KAFKA_URL=http://mesoskafka:7000
 ```
 
-##Minimal configuration
+## Minimal configuration
 ```
 resource "mesoskafka_cluster" "my_cluster" {
   broker_count = 3
@@ -31,7 +31,7 @@ resource "mesoskafka_cluster" "my_cluster" {
 }
 ```
 
-##Full configuration
+## Full configuration
 ```
 resource "mesoskafka_cluster" "my_cluster" {
   broker_count = 3
@@ -47,7 +47,7 @@ resource "mesoskafka_cluster" "my_cluster" {
 }
 ```
 
-##How to install
+## How to install
 ```bash
 $ go get github.com/Banno/terraform-provider-mesoskafka
 ```
