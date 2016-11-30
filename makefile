@@ -9,14 +9,16 @@ linux:
 osx:
 	GOOS=darwin GOARCH=386 go build -o bin/terraform-provider-mesoskafka-osx .
 
-build: vet osx linux
+install:
 	go install .
 
-test: build
-	big inventory add marathon kafka-scheduler
-	big up -d marathon kafka-scheduler
-	Sleep 5
-	TF_ACC=yes MESOS_KAFKA_URL="http://dev.banno.com:7000" go test ./mesoskafka -v
+test: install
+	big destroy
+	big stack reset
+	big inventory add kafka-scheduler service-registry-watcher
+	big up -d
+	sleep 5
+	TF_ACC=yes MESOS_KAFKA_URL="http://dev.banno.com:7000" go test -timeout 20m ./mesoskafka -v
 
-release:
+release: vet linux osx
 	./bin/release.sh
