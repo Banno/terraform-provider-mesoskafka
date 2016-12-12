@@ -1,0 +1,92 @@
+dns:
+  image: registry.banno-internal.com/big-dns:latest
+  ports:
+    - '53:53'
+    - 53:53/udp
+  environment:
+    DEV_BANNO_IP:
+    LOCAL_BANNO_IP:
+
+zookeeper:
+  image: registry.banno-internal.com/zookeeper:3.4.8
+  ports:
+    - 2181:2181
+  dns:
+    - dns
+
+kafka-scheduler:
+  image: registry.banno-internal.com/kafka-mesos:latest
+  command: "./kafka-mesos.sh scheduler --master zk://zookeeper:2181/mesos --zk
+  zookeeper:2181 --api http://dev.banno.com:7000 --storage zk:/kafka-mesos
+  --user root"
+  ports:
+    - 7000:7000
+  environment:
+    ZOOKEEPER_QUORUM: zookeeper:2181
+  links:
+    - dns
+    - zookeeper
+    - mesos-master
+    - mesos-agent1
+    - mesos-agent2
+  dns:
+    - dns
+
+mesos-master:
+  image: registry.banno-internal.com/mesos-master:1.0
+  ports:
+    - 5050:5050
+  environment:
+    MESOS_ZK: zk://zookeeper:2181/mesos
+    MESOS_LOG_DIR: "/var/log"
+    MESOS_WORK_DIR: "/mesos"
+    MESOS_QUORUM: 1
+    MESOS_CLUSTER: dev.banno.com
+  links:
+    - dns
+    - zookeeper
+  dns:
+    - dns
+
+mesos-agent1:
+  image: registry.banno-internal.com/mesos-agent:1.0
+  ports:
+    - 5151:5151
+  environment:
+    MESOS_CONTAINERIZERS: docker,mesos
+    MESOS_DOCKER_STOP_TIMEOUT: 30secs
+    MESOS_LOG_DIR: "/var/log"
+    MESOS_MASTER: zk://zookeeper:2181/mesos
+    MESOS_WORK_DIR: "/mesos"
+    MESOS_PORT: '5151'
+    MESOS_HOSTNAME: mesosagent1.dev.banno.com
+  volumes:
+    - "/sys:/sys"
+    - "/var/run/docker.sock:/var/run/docker.sock"
+  links:
+    - dns
+    - zookeeper
+  dns:
+    - dns
+
+mesos-agent2:
+  image: registry.banno-internal.com/mesos-agent:1.0
+  command: mesos-agent --resources=ports:[41000-42000]
+  ports:
+    - 5152:5152
+  environment:
+    MESOS_CONTAINERIZERS: docker,mesos
+    MESOS_DOCKER_STOP_TIMEOUT: 30secs
+    MESOS_LOG_DIR: "/var/log"
+    MESOS_MASTER: zk://zookeeper:2181/mesos
+    MESOS_WORK_DIR: "/mesos"
+    MESOS_PORT: '5152'
+    MESOS_HOSTNAME: mesosagent2.dev.banno.com
+  volumes:
+    - "/sys:/sys"
+    - "/var/run/docker.sock:/var/run/docker.sock"
+  links:
+    - dns
+    - zookeeper
+  dns:
+    - dns
